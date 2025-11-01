@@ -1,0 +1,33 @@
+package models
+
+import (
+	"time"
+
+	"github.com/restayway/gogis"
+)
+
+type Farmer struct {
+	ID uint `gorm:"primaryKey;autoIncrement" json:"id"`
+
+	Name             string `gorm:"type:varchar(100);not null" json:"name"`
+	Email            string `gorm:"type:varchar(100);uniqueIndex;not null" json:"email"`
+	Mobile           string `gorm:"type:varchar(15);not null" json:"mobile"`
+	Password         string `gorm:"type:varchar(255);not null" json:"-"`
+	SupportsDelivery bool   `gorm:"default:false" json:"supports_delivery"`
+	Address         string      `gorm:"type:varchar(255);not null" json:"address"`
+	Latitude        float64     `gorm:"type:decimal(10,8);" json:"latitude"`
+	Longitude       float64     `gorm:"type:decimal(10,8);" json:"longitude"`
+	Location        gogis.Point `gorm:"type:geometry(POINT,4326);" json:"location"`
+	SubscriberCount uint        `gorm:"type:int;default:0" json:"subscriber_count"`
+
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+
+	FarmerProducts []FarmerProduct `gorm:"foreignKey:ShopID" json:"shop_products"`
+}
+
+type FarmerSubscription struct {
+	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	FarmerID    uint      `gorm:"not null;index" json:"shop_id"`
+	UserID    uint      `gorm:"not null;index" json:"user_id"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+}

@@ -20,7 +20,7 @@ import (
 )
 
 type Data struct {
-	models.Shop
+	models.Farmer
 	Token string `json:"token"`
 }
 
@@ -67,9 +67,7 @@ func registerProduct(t *testing.T, db *gorm.DB) uint {
 
 	catalog := models.CatalogProduct{
 		Name:       "Test Product",
-		Category:   "Test Category",
-		Desciption: "Test Description",
-		Brand:      "Test Brand",
+		Description: "This is a test product description.",
 		ImageURL:   "http://example.com/image.jpg",
 	}
 

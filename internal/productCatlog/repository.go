@@ -28,8 +28,8 @@ func (r *Repository) Suggest(keyword string, limit int) (*[]models.CatalogProduc
 	// Query with enhanced search across multiple fields
 	result := r.DB.
 		Limit(limit).
-		Where("LOWER(name) LIKE ? OR LOWER(brand) LIKE ? OR LOWER(category) LIKE ? OR LOWER(desciption) LIKE ?",
-					searchPattern, searchPattern, searchPattern, searchPattern).
+		Where("LOWER(name) LIKE ? OR LOWER(description) LIKE ?",
+					searchPattern, searchPattern,).
 		Order("name ASC"). // Order by name for consistent results
 		Find(&products)
 

@@ -28,7 +28,7 @@ func (ctrl *Controller) RegisterShop(c *gin.Context) {
 		return
 	}
 
-	shop, err := ctrl.shopService.RegisterShop(&dto)
+	farmer, err := ctrl.shopService.RegisterShop(&dto)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			utils.ErrorResponseSimple(c, 409, "shop already exists")
@@ -38,12 +38,12 @@ func (ctrl *Controller) RegisterShop(c *gin.Context) {
 		return
 	}
 
-	if shop == nil {
+	if farmer == nil {
 		utils.ErrorResponseSimple(c, 500, "failed to create shop")
 		return
 	}
 
-	token, err := utils.GenerateAccessToken(shop.ID, models.RoleShopOwner)
+	token, err := utils.GenerateAccessToken(farmer.ID, models.RoleShopOwner)
 
 	if err != nil {
 		utils.ErrorResponseSimple(c, 500, "failed to generate access token")
@@ -53,15 +53,13 @@ func (ctrl *Controller) RegisterShop(c *gin.Context) {
 	utils.SetCookie(token, 3600*24*30, c)
 
 	utils.SuccessResponse(c, http.StatusCreated, "Shop registered successfully", ShopRegisterDTOResponse{
-		ID:        shop.ID,
-		Name:      shop.Name,
-		OwnerName: shop.OwnerName,
-		Type:      shop.Type,
-		Email:     shop.Email,
-		Mobile:    shop.Mobile,
-		Address:   shop.Address,
-		Latitude:  shop.Latitude,
-		Longitude: shop.Longitude,
+		ID:        farmer.ID,
+		Name:      farmer.Name,
+		Email:     farmer.Email,
+		Mobile:    farmer.Mobile,
+		Address:   farmer.Address,
+		Latitude:  farmer.Latitude,
+		Longitude: farmer.Longitude,
 		Token:     token,
 	})
 }
@@ -95,15 +93,12 @@ func (ctrl *Controller) Login(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Shop logged in successfully", ShopRegisterDTOResponse{
 		ID:        shop.ID,
 		Name:      shop.Name,
-		OwnerName: shop.OwnerName,
-		Type:      shop.Type,
 		Email:     shop.Email,
 		Mobile:    shop.Mobile,
 		Address:   shop.Address,
 		Latitude:  shop.Latitude,
 		Longitude: shop.Longitude,
 		Token:     token,
-		IsOpen:    shop.IsOpen,
 	})
 
 }
@@ -115,7 +110,7 @@ func (ctrl *Controller) GetShopProfile(c *gin.Context) {
 		return
 	}
 
-	shop, ok := shopInterface.(models.Shop)
+	shop, ok := shopInterface.(models.Farmer)
 	if !ok {
 		utils.ErrorResponseSimple(c, 500, "failed to parse shop data")
 		return
@@ -124,15 +119,12 @@ func (ctrl *Controller) GetShopProfile(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Shop profile retrieved successfully", ShopRegisterDTOResponse{
 		ID:              shop.ID,
 		Name:            shop.Name,
-		OwnerName:       shop.OwnerName,
-		Type:            shop.Type,
 		Email:           shop.Email,
 		Mobile:          shop.Mobile,
 		Address:         shop.Address,
 		Latitude:        shop.Latitude,
 		Longitude:       shop.Longitude,
 		SubscriberCount: shop.SubscriberCount,
-		IsOpen:          shop.IsOpen,
 	})
 }
 
@@ -149,7 +141,7 @@ func (ctrl *Controller) AddProduct(c *gin.Context) {
 		return
 	}
 
-	shop, ok := shopInterface.(models.Shop)
+	shop, ok := shopInterface.(models.Farmer)
 	if !ok {
 		utils.ErrorResponseSimple(c, 500, "failed to parse shop data")
 		return
@@ -171,7 +163,7 @@ func (ctrl *Controller) GetAllProducts(c *gin.Context) {
 		return
 	}
 
-	shop, ok := shopInterface.(models.Shop)
+	shop, ok := shopInterface.(models.Farmer)
 	if !ok {
 		utils.ErrorResponseSimple(c, 500, "failed to parse shop data")
 		return
@@ -255,63 +247,6 @@ func (ctrl *Controller) DeleteProduct(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "Product deleted successfully", nil)
 }
 
-func (ctrl *Controller) IsShopOpen(c *gin.Context) {
-	shopIDParam := c.Param("id")
-	shopId, err := utils.ParseUintParam(shopIDParam)
-
-	if err != nil {
-		utils.ErrorResponseSimple(c, 400, "invalid shop ID")
-		return
-	}
-
-	shop, err := ctrl.shopService.GetShopByID(shopId)
-	if err != nil {
-		utils.ErrorResponseSimple(c, 500, err.Error())
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Shop status retrieved successfully", shop.IsOpen)
-}
-
-func (ctrl *Controller) UpdateShopStatus(c *gin.Context) {
-	shopInterface, exists := c.Get("shop")
-	if !exists {
-		utils.ErrorResponseSimple(c, 401, "unauthorized")
-		return
-	}
-
-	shop, ok := shopInterface.(models.Shop)
-	if !ok {
-		utils.ErrorResponseSimple(c, 500, "failed to parse shop data")
-		return
-	}
-
-	status := c.Query("status")
-	// status can be "open" or "closed"
-	if status == "" {
-		utils.ErrorResponseSimple(c, 400, "status is required")
-		return
-	}
-
-	var isOpen bool
-	switch status {
-	case "open":
-		isOpen = true
-	case "closed":
-		isOpen = false
-	default:
-		utils.ErrorResponseSimple(c, 400, "invalid status")
-		return
-	}
-
-	err := ctrl.shopService.UpdateShopStatus(shop.ID, isOpen)
-	if err != nil {
-		utils.ErrorResponseSimple(c, 500, err.Error())
-		return
-	}
-
-	utils.SuccessResponse(c, http.StatusOK, "Shop status updated successfully", nil)
-}
 
 func (ctrl *Controller) NearByShop(c *gin.Context) {
 	latStr := c.Query("lat")
@@ -343,7 +278,7 @@ func (ctrl *Controller) NearByShop(c *gin.Context) {
 		return
 	}
 
-	shops, err := ctrl.shopService.GetNearbyShops(lat, lon, radius, lim)
+	shops, err := ctrl.shopService.GetNearbyFarmers(lat, lon, radius, lim)
 	if err != nil {
 		utils.ErrorResponseSimple(c, 500, err.Error())
 		return
@@ -396,25 +331,23 @@ func RegisterRoutes(r *gin.Engine, db *gorm.DB) {
 	productService := product.NewService(product.NewRepository(db))
 	ctrl := NewController(shopService, productService)
 
-	shops := r.Group("/shops")
+	farmers := r.Group("/farmers")
 	{
-		shops.POST("/register", ctrl.RegisterShop)
-		shops.POST("/login", ctrl.Login)
-		shops.GET("/profile", middlewares.RequireShopOwnerAuth(db), ctrl.GetShopProfile)
-		shops.GET("", ctrl.NearByShop)
-		shops.GET("/is_open/:id", ctrl.IsShopOpen)
-		shops.PUT("/status", middlewares.RequireShopOwnerAuth(db), ctrl.UpdateShopStatus)
+		farmers.POST("/register", ctrl.RegisterShop)
+		farmers.POST("/login", ctrl.Login)
+		farmers.GET("/profile", middlewares.RequireShopOwnerAuth(db), ctrl.GetShopProfile)
+		farmers.GET("", ctrl.NearByShop)
 
-		shops.GET("/:id", middlewares.RequireUserAuth(db), ctrl.GetShopDetails)
-		shops.GET("/:id/products", ctrl.GetShopProducts)
-		shops.POST("/:id/subscribe", middlewares.RequireUserAuth(db), ctrl.SubscribeShop)
-		shops.POST("/:id/unsubscribe", middlewares.RequireUserAuth(db), ctrl.UnsubscribeShop)
+		farmers.GET("/:id", middlewares.RequireUserAuth(db), ctrl.GetShopDetails)
+		farmers.GET("/:id/products", ctrl.GetShopProducts)
+		farmers.POST("/:id/subscribe", middlewares.RequireUserAuth(db), ctrl.SubscribeFarmer)
+		farmers.POST("/:id/unsubscribe", middlewares.RequireUserAuth(db), ctrl.UnsubscribeFarmer)
 	}
 
 	// User subscriptions endpoint
 	r.GET("/user/subscriptions", middlewares.RequireUserAuth(db), ctrl.GetUserSubscriptions)
 
-	products := r.Group("/shop/products")
+	products := r.Group("/farmers/products")
 	products.Use(middlewares.RequireShopOwnerAuth(db))
 	{
 		products.POST("", ctrl.AddProduct)

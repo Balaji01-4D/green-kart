@@ -15,16 +15,14 @@ func NewService(r *Repository) *Service {
 	return &Service{repository: r}
 }
 
-func (s *Service) RegisterShop(registerDTO *ShopRegisterDTORequest) (*models.Shop, error) {
+func (s *Service) RegisterShop(registerDTO *ShopRegisterDTORequest) (*models.Farmer, error) {
 
 	password, err := utils.HashPassword(registerDTO.Password)
 	if err != nil {
 		return nil, err
 	}
-	shop := &models.Shop{
+	shop := &models.Farmer{
 		Name:      registerDTO.Name,
-		OwnerName: registerDTO.OwnerName,
-		Type:      registerDTO.Type,
 		Password:  password,
 		Email:     registerDTO.Email,
 		Mobile:    registerDTO.Mobile,
@@ -44,7 +42,7 @@ func (s *Service) RegisterShop(registerDTO *ShopRegisterDTORequest) (*models.Sho
 	return shop, nil
 }
 
-func (s *Service) AuthenticateShop(request *ShopLoginDTORequest) (*models.Shop, error) {
+func (s *Service) AuthenticateShop(request *ShopLoginDTORequest) (*models.Farmer, error) {
 	shop, err := s.repository.FindByEmail(request.Email)
 	if err != nil {
 		return nil, err
@@ -61,41 +59,41 @@ func (s *Service) AuthenticateShop(request *ShopLoginDTORequest) (*models.Shop, 
 	return shop, nil
 }
 
-func (s *Service) GetShopByID(shopID uint) (*models.Shop, error) {
+func (s *Service) GetShopByID(shopID uint) (*models.Farmer, error) {
 	return s.repository.FindByID(shopID)
 
 }
 
-func (s *Service) GetNearbyShops(lat float64, lon float64, radius float64, limit int) ([]NearByShopsDTORespone, error) {
-	shops, err := s.repository.FindNearbyShops(lat, lon, radius, limit)
+func (s *Service) GetNearbyFarmers(lat float64, lon float64, radius float64, limit int) ([]NearByShopsDTORespone, error) {
+	farmers, err := s.repository.FindNearbyShops(lat, lon, radius, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	return shops, nil
+	return farmers, nil
 }
 
-func (s *Service) SubscribeShop(userID uint, shopID uint) (uint, error) {
-	subscriberCount, err := s.repository.SubscribeShop(shopID, userID)
+func (s *Service) SubscribeFarmer(userID uint, farmerID uint) (uint, error) {
+	subscriberCount, err := s.repository.SubscribeFarmer(farmerID, userID)
 	if err != nil {
 		return 0, err
 	}
 	return subscriberCount, nil
 }
 
-func (s *Service) UpdateShopStatus(shopID uint, status bool) error {
-	return s.repository.UpdateShopStatus(shopID, status)
+func (s *Service) UpdateFarmerStatus(farmerID uint, status bool) error {
+	return s.repository.UpdateFarmerStatus(farmerID, status)
 }
 
-func (s *Service) UnsubscribeShop(userID uint, shopID uint) (uint, error) {
-	subscriberCount, err := s.repository.UnsubscribeShop(shopID, userID)
+func (s *Service) UnsubscribeFarmer(userID uint, farmerID uint) (uint, error) {
+	subscriberCount, err := s.repository.UnsubscribeShop(farmerID, userID)
 	if err != nil {
 		return 0, err
 	}
 	return subscriberCount, nil
 }
 
-func (s *Service) GetShopDetails(shopID uint, userID uint) (*models.Shop, bool, error) {
+func (s *Service) GetFarmerDetails(shopID uint, userID uint) (*models.Farmer, bool, error) {
 	shop, isSubscribed, err := s.repository.GetShopDetails(shopID, userID)
 	if err != nil {
 		return nil, false, err
@@ -103,6 +101,6 @@ func (s *Service) GetShopDetails(shopID uint, userID uint) (*models.Shop, bool, 
 	return shop, isSubscribed, nil
 }
 
-func (s *Service) GetUserSubscribedShops(userID uint) ([]models.Shop, error) {
+func (s *Service) GetUserSubscribedShops(userID uint) ([]models.Farmer, error) {
 	return s.repository.GetUserSubscribedShops(userID)
 }

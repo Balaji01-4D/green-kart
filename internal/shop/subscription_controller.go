@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (ctrl *Controller) SubscribeShop(c *gin.Context) {
+func (ctrl *Controller) SubscribeFarmer(c *gin.Context) {
 	// Get shop ID from URL parameter
 	shopIDParam := c.Param("id")
 	shopID, err := strconv.ParseUint(shopIDParam, 10, 32)
@@ -27,7 +27,7 @@ func (ctrl *Controller) SubscribeShop(c *gin.Context) {
 
 	u := user.(models.User)
 
-	subscriberCount, err := ctrl.shopService.SubscribeShop(uint(u.ID), uint(shopID))
+	subscriberCount, err := ctrl.shopService.SubscribeFarmer(uint(u.ID), uint(shopID))
 	if err != nil {
 		if err.Error() == "already subscribed" {
 			utils.ErrorResponseSimple(c, 400, "User is already subscribed to this shop")
@@ -43,7 +43,7 @@ func (ctrl *Controller) SubscribeShop(c *gin.Context) {
 	})
 }
 
-func (ctrl *Controller) UnsubscribeShop(c *gin.Context) {
+func (ctrl *Controller) UnsubscribeFarmer(c *gin.Context) {
 	// Get shop ID from URL parameter
 	shopIDParam := c.Param("id")
 	shopID, err := strconv.ParseUint(shopIDParam, 10, 32)
@@ -61,7 +61,7 @@ func (ctrl *Controller) UnsubscribeShop(c *gin.Context) {
 
 	u := user.(models.User)
 
-	subscriberCount, err := ctrl.shopService.UnsubscribeShop(uint(u.ID), uint(shopID))
+	subscriberCount, err := ctrl.shopService.UnsubscribeFarmer(uint(u.ID), uint(shopID))
 	if err != nil {
 		if err.Error() == "not subscribed" {
 			utils.ErrorResponseSimple(c, 400, "User is not subscribed to this shop")
@@ -94,17 +94,17 @@ func (ctrl *Controller) GetShopDetails(c *gin.Context) {
 
 	u := user.(models.User)
 
-	shop, isSubscribed, err := ctrl.shopService.GetShopDetails(uint(shopID), u.ID)
+	shop, isSubscribed, err := ctrl.shopService.GetFarmerDetails(uint(shopID), u.ID)
 	if err != nil {
 		if err.Error() == "record not found" {
-			utils.ErrorResponseSimple(c, 404, "Shop not found")
+			utils.ErrorResponseSimple(c, 404, "farmer not found")
 			return
 		}
 		utils.ErrorResponseSimple(c, 500, err.Error())
 		return
 	}
 
-	utils.SuccessResponse(c, http.StatusOK, "Shop details retrieved successfully", GetShopDetailsDTOResponse{
+	utils.SuccessResponse(c, http.StatusOK, "Farmer details retrieved successfully", GetShopDetailsDTOResponse{
 		ID:              shop.ID,
 		Name:            shop.Name,
 		SubscriberCount: shop.SubscriberCount,
@@ -134,13 +134,10 @@ func (ctrl *Controller) GetUserSubscriptions(c *gin.Context) {
 		response = append(response, SubscribedShopDTOResponse{
 			ID:              shop.ID,
 			Name:            shop.Name,
-			OwnerName:       shop.OwnerName,
-			Type:            shop.Type,
 			Address:         shop.Address,
 			Latitude:        shop.Latitude,
 			Longitude:       shop.Longitude,
 			SubscriberCount: shop.SubscriberCount,
-			IsOpen:          shop.IsOpen,
 		})
 	}
 

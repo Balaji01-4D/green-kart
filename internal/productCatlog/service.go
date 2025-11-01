@@ -12,10 +12,8 @@ func NewService(r *Repository) *Service {
 
 func (s *Service) CreateCatalogProduct(product *CreateCatalogProductDTO) error {
 	catalogProduct := &models.CatalogProduct{
-		Name:       product.Name,
-		Brand:      product.Brand,
-		Category:   product.Category,
-		Desciption: product.Description,
+		Name:        product.Name,
+		Description: product.Description,
 		ImageURL:   product.ImageURL,
 	}
 	return s.repository.CreateCatalogProduct(catalogProduct)

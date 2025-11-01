@@ -38,7 +38,7 @@ var (
 	port       = os.Getenv("DB_PORT")
 	host       = os.Getenv("DB_HOST")
 	schema     = os.Getenv("DB_SCHEMA")
-	sslmode := os.Getenv("DB_SSLMODE")
+	sslmode    = os.Getenv("DB_SSLMODE")
 	dbInstance *service
 )
 

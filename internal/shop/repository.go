@@ -22,7 +22,7 @@ func (r *Repository) FindNearbyShops(lat float64, lon float64, radius float64, l
             latitude, 
             longitude, 
             ST_Distance(location, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) AS distance
-        FROM shops
+        FROM farmers
         WHERE ST_DWithin(location, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)
         ORDER BY distance
         LIMIT ?
@@ -40,27 +40,27 @@ func (r *Repository) FindNearbyShops(lat float64, lon float64, radius float64, l
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{DB: db}
 }
-func (r *Repository) Create(shop *models.Shop) error {
+func (r *Repository) Create(shop *models.Farmer) error {
 	return r.DB.Create(shop).Error
 }
 
-func (r *Repository) FindByEmail(email string) (*models.Shop, error) {
-	var shop models.Shop
+func (r *Repository) FindByEmail(email string) (*models.Farmer, error) {
+	var shop models.Farmer
 	result := r.DB.Where("email = ?", email).First(&shop)
 	return &shop, result.Error
 }
 
-func (r *Repository) FindByID(id uint) (*models.Shop, error) {
-	var shop models.Shop
+func (r *Repository) FindByID(id uint) (*models.Farmer, error) {
+	var shop models.Farmer
 	result := r.DB.First(&shop, id)
 	return &shop, result.Error
 }
 
-func (r *Repository) UpdateShopStatus(shopID uint, status bool) error {
-	return r.DB.Model(&models.Shop{}).Where("id = ?", shopID).Update("is_open", status).Error
+func (r *Repository) UpdateFarmerStatus(farmerID uint, status bool) error {
+	return r.DB.Model(&models.Farmer{}).Where("id = ?", farmerID).Update("is_open", status).Error
 }
 
-func (r *Repository) SubscribeShop(shopID uint, userID uint) (uint, error) {
+func (r *Repository) SubscribeFarmer(farmerID uint, userID uint) (uint, error) {
 	// Use a transaction to ensure data consistency
 	tx := r.DB.Begin()
 	defer func() {
@@ -75,7 +75,7 @@ func (r *Repository) SubscribeShop(shopID uint, userID uint) (uint, error) {
 
 	// Check if already subscribed
 	var existingCount int64
-	if err := tx.Model(&models.ShopSubscription{}).Where("shop_id = ? AND user_id = ?", shopID, userID).Count(&existingCount).Error; err != nil {
+	if err := tx.Model(&models.FarmerSubscription{}).Where("farmer_id = ? AND user_id = ?", farmerID, userID).Count(&existingCount).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
@@ -86,9 +86,9 @@ func (r *Repository) SubscribeShop(shopID uint, userID uint) (uint, error) {
 	}
 
 	// Create new subscription
-	subscription := &models.ShopSubscription{
-		ShopID: shopID,
-		UserID: userID,
+	subscription := &models.FarmerSubscription{
+		FarmerID: farmerID,
+		UserID:   userID,
 	}
 	if err := tx.Create(subscription).Error; err != nil {
 		tx.Rollback()
@@ -97,13 +97,13 @@ func (r *Repository) SubscribeShop(shopID uint, userID uint) (uint, error) {
 
 	// Recalculate subscriber count
 	var subscriberCount int64
-	if err := tx.Model(&models.ShopSubscription{}).Where("shop_id = ?", shopID).Count(&subscriberCount).Error; err != nil {
+	if err := tx.Model(&models.FarmerSubscription{}).Where("farmer_id = ?", farmerID).Count(&subscriberCount).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
 
-	// Update shop's subscriber count
-	if err := tx.Model(&models.Shop{}).Where("id = ?", shopID).Update("subscriber_count", subscriberCount).Error; err != nil {
+	// Update farmer's subscriber count
+	if err := tx.Model(&models.Farmer{}).Where("id = ?", farmerID).Update("subscriber_count", subscriberCount).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
@@ -131,7 +131,7 @@ func (r *Repository) UnsubscribeShop(shopID uint, userID uint) (uint, error) {
 
 	// Check if subscription exists
 	var existingCount int64
-	if err := tx.Model(&models.ShopSubscription{}).Where("shop_id = ? AND user_id = ?", shopID, userID).Count(&existingCount).Error; err != nil {
+	if err := tx.Model(&models.FarmerSubscription{}).Where("shop_id = ? AND user_id = ?", shopID, userID).Count(&existingCount).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
@@ -142,20 +142,20 @@ func (r *Repository) UnsubscribeShop(shopID uint, userID uint) (uint, error) {
 	}
 
 	// Delete the subscription
-	if err := tx.Where("shop_id = ? AND user_id = ?", shopID, userID).Delete(&models.ShopSubscription{}).Error; err != nil {
+	if err := tx.Where("shop_id = ? AND user_id = ?", shopID, userID).Delete(&models.FarmerSubscription{}).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
 
 	// Recalculate subscriber count
 	var subscriberCount int64
-	if err := tx.Model(&models.ShopSubscription{}).Where("shop_id = ?", shopID).Count(&subscriberCount).Error; err != nil {
+	if err := tx.Model(&models.FarmerSubscription{}).Where("shop_id = ?", shopID).Count(&subscriberCount).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
 
 	// Update shop's subscriber count
-	if err := tx.Model(&models.Shop{}).Where("id = ?", shopID).Update("subscriber_count", subscriberCount).Error; err != nil {
+	if err := tx.Model(&models.Farmer{}).Where("id = ?", shopID).Update("subscriber_count", subscriberCount).Error; err != nil {
 		tx.Rollback()
 		return 0, err
 	}
@@ -170,15 +170,15 @@ func (r *Repository) UnsubscribeShop(shopID uint, userID uint) (uint, error) {
 
 func (r *Repository) IsAlreadySubscribed(shopID uint, userID uint) bool {
 	var count int64
-	result := r.DB.Model(&models.ShopSubscription{}).Where("shop_id = ? AND user_id = ?", shopID, userID).Count(&count)
+	result := r.DB.Model(&models.FarmerSubscription{}).Where("shop_id = ? AND user_id = ?", shopID, userID).Count(&count)
 	if result.Error != nil {
 		return false
 	}
 	return count > 0
 }
 
-func (r *Repository) GetShopDetails(shopID uint, userID uint) (*models.Shop, bool, error) {
-	var shop models.Shop
+func (r *Repository) GetShopDetails(shopID uint, userID uint) (*models.Farmer, bool, error) {
+	var shop models.Farmer
 	if err := r.DB.First(&shop, shopID).Error; err != nil {
 		return nil, false, err
 	}
@@ -187,7 +187,7 @@ func (r *Repository) GetShopDetails(shopID uint, userID uint) (*models.Shop, boo
 	var isSubscribed bool
 	if userID > 0 {
 		var count int64
-		if err := r.DB.Model(&models.ShopSubscription{}).Where("user_id = ? AND shop_id = ?", userID, shopID).Count(&count).Error; err != nil {
+		if err := r.DB.Model(&models.FarmerSubscription{}).Where("user_id = ? AND shop_id = ?", userID, shopID).Count(&count).Error; err != nil {
 			return &shop, false, err
 		}
 		isSubscribed = count > 0
@@ -196,8 +196,8 @@ func (r *Repository) GetShopDetails(shopID uint, userID uint) (*models.Shop, boo
 	return &shop, isSubscribed, nil
 }
 
-func (r *Repository) GetUserSubscribedShops(userID uint) ([]models.Shop, error) {
-	var shops []models.Shop
+func (r *Repository) GetUserSubscribedShops(userID uint) ([]models.Farmer, error) {
+	var shops []models.Farmer
 
 	// Join ShopSubscription with Shop to get subscribed shops
 	err := r.DB.Joins("JOIN shop_subscriptions ON shops.id = shop_subscriptions.shop_id").

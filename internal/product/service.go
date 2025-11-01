@@ -11,7 +11,7 @@ func NewService(r *Repository) *Service {
 }
 
 func (s *Service) AddProduct(dto *AddProductDTORequest, shopID uint) error {
-	product := &models.ShopProduct{
+	product := &models.FarmerProduct{
 		ShopID:      shopID,
 		CatalogID:   dto.CatalogID,
 		Price:       dto.Price,
@@ -23,16 +23,16 @@ func (s *Service) AddProduct(dto *AddProductDTORequest, shopID uint) error {
 	return s.repository.AddProduct(product)
 }
 
-func (s *Service) GetProductsByShopID(shopID uint) ([]models.ShopProduct, error) {
+func (s *Service) GetProductsByShopID(shopID uint) ([]models.FarmerProduct, error) {
 	return s.repository.GetProductsByShopID(shopID)
 }
 
-func (s *Service) GetProductByID(productID uint) (*models.ShopProduct, error) {
+func (s *Service) GetProductByID(productID uint) (*models.FarmerProduct, error) {
 	return s.repository.GetProductByID(productID)
 }
 
 func (s *Service) UpdateProduct(productDTO *ProductUpdateDTORequest) error {
-	product := &models.ShopProduct{
+	product := &models.FarmerProduct{
 		ID:          productDTO.ID,
 		Price:       productDTO.Price,
 		Stock:       productDTO.Stock,

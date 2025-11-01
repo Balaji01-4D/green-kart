@@ -61,7 +61,7 @@ func requireShopOwnerAuth(c *gin.Context) {
 		return
 	}
 
-	var shop models.Shop
+	var shop models.Farmer
 	if err := db.Where("id = ?", shopID).First(&shop).Error; err != nil || shop.ID == 0 {
 		utils.ErrorResponseSimple(c, http.StatusUnauthorized, "shop not found")
 		c.Abort()

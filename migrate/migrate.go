@@ -32,10 +32,14 @@ func Migrate() {
 	db.Exec("CREATE EXTENSION IF NOT EXISTS postgis;")
 	// Migrate the schema
 	err = db.AutoMigrate(&models.User{})
-	err = db.AutoMigrate(&models.Shop{})
+	err = db.AutoMigrate(&models.Farmer{})
 	err = db.AutoMigrate(&models.CatalogProduct{})
-	err = db.AutoMigrate(&models.ShopProduct{})
-	err = db.AutoMigrate(&models.ShopSubscription{})
+	err = db.AutoMigrate(&models.FarmerProduct{})
+	err = db.AutoMigrate(&models.FarmerSubscription{})
+	// Delivery-related models for hybrid logistics
+	err = db.AutoMigrate(&models.DeliveryPartner{})
+	err = db.AutoMigrate(&models.DeliveryOption{})
+	err = db.AutoMigrate(&models.DeliveryRecord{})
 
 	if err != nil {
 		panic("failed to migrate database")
